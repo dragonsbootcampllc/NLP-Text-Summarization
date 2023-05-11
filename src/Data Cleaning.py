@@ -27,6 +27,15 @@ print(data.isnull().sum())
 # Remove the null values
 data.dropna(inplace=True)
 
+# Remove non-english articles
+data = data[data['text'].apply(lambda x: x.isascii())]
+data = data[data['ctext'].apply(lambda x: x.isascii())]
+
+# Remove the non-String values
+data = data[data['text'].apply(lambda x: isinstance(x, str))]
+data = data[data['ctext'].apply(lambda x: isinstance(x, str))]
+
+
 # print data after removing null values
 print(data.isnull().sum())
 
@@ -43,6 +52,20 @@ print(data.duplicated().sum())
 # Convert the text to lowercase
 data['text'] = data['text'].apply(lambda x: x.lower())
 data['ctext'] = data['ctext'].apply(lambda x: x.lower())
+
+# Remove the numbers
+data['text'] = data['text'].apply(lambda x: re.sub('[^a-zA-Z]', ' ', x))
+data['ctext'] = data['ctext'].apply(lambda x: re.sub('[^a-zA-Z]', ' ', x))
+
+# Remove the extra spaces
+data['text'] = data['text'].apply(lambda x: re.sub(' +', ' ', x))
+data['ctext'] = data['ctext'].apply(lambda x: re.sub(' +', ' ', x))
+
+# Remove single characters
+data['text'] = data['text'].apply(lambda x: re.sub(r'\s+[a-zA-Z]\s+', ' ', x))
+data['ctext'] = data['ctext'].apply(lambda x: re.sub(r'\s+[a-zA-Z]\s+', ' ', x))
+
+
 
 # Remove the punctuation
 data['text'] = data['text'].apply(lambda x: x.translate(str.maketrans('', '', string.punctuation)))
