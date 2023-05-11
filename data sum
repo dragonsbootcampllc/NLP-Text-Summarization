@@ -1,0 +1,191 @@
+# Goal: take the row of data and summarize it
+# Input: row of data
+# Output: summary of data
+
+
+# import libraries
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import nltk
+import re
+import string
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
+from nltk.tokenize import sent_tokenize
+from nltk.probability import FreqDist
+
+# read in data
+data = pd.read_csv('data.csv')
+
+# # data exploration
+# data.head()
+# data.info()
+# data.describe()
+
+
+# # main function
+# def summarize(data):
+#     # clean data
+#     cleaned_data = clean(data)
+#     return cleaned_data
+
+# # data Cleaning
+# def clean(data):
+#     # remove punctuation
+#     data['cleaned'] = data['text'].apply(lambda x: x.translate(str.maketrans('', '', string.punctuation)))
+#     # remove numbers
+#     data['cleaned'] = data['cleaned'].apply(lambda x: re.sub(r'\d+', '', x))
+#     # remove stopwords
+#     stop_words = set(stopwords.words('english'))
+#     data['cleaned'] = data['cleaned'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop_words)]))
+#     # remove extra whitespace
+#     data['cleaned'] = data['cleaned'].apply(lambda x: x.strip())
+#     # remove single characters
+#     data['cleaned'] = data['cleaned'].apply(lambda x: re.sub(r'\s+[a-zA-Z]\s+', ' ', x))
+#     # remove multiple spaces
+#     data['cleaned'] = data['cleaned'].apply(lambda x: re.sub(r'\s+', ' ', x))
+#     # lemmatization
+#     lemmatizer = WordNetLemmatizer()
+#     data['cleaned'] = data['cleaned'].apply(lambda x: ' '.join([lemmatizer.lemmatize(word) for word in x.split()]))
+#     # lowercase
+#     data['cleaned'] = data['cleaned'].apply(lambda x: x.lower())
+#     # drop empty rows
+#     data = data[data['cleaned'].notna()]
+#     # check data types and remove non-string characters
+#     data['cleaned'] = data['cleaned'].apply(lambda x: str(x))
+#     # rename column
+#     data = data.rename(columns={'cleaned': 'text'})
+#     # remove duplicate words    
+#     data['cleaned'] = data['cleaned'].apply(lambda x: ' '.join(sorted(set(x.split()), key=x.split().index)))
+
+#     # return cleaned data
+#     return data
+
+
+# Tokenization step
+
+def Tokenization(data):
+    # tokenize sentences
+    data['tokenized'] = data['text'].apply(lambda x: sent_tokenize(x))
+    # tokenize words
+    data['tokenized'] = data['tokenized'].apply(lambda x: [word_tokenize(i) for i in x])
+    # return tokenized data
+    return data
+
+# # POS tagging step
+def POS(data):
+    # POS tagging
+    data['POS'] = data['tokenized'].apply(lambda x: nltk.pos_tag(x))
+    # return POS data
+    return data
+
+# # Named Entity Recognition step
+def NER(data):
+    # NER
+    data['NER'] = data['POS'].apply(lambda x: nltk.ne_chunk(x))
+    # return NER data
+    return data
+
+# # Frequency Distribution step
+def FreqDist(data):
+    # Frequency Distribution
+    data['FreqDist'] = data['tokenized'].apply(lambda x: FreqDist(x))
+    # return FreqDist data
+    return data
+
+# Parsing step
+def Parsing(data):
+    # Parsing
+    data['Parsing'] = data['tokenized'].apply(lambda x: nltk.parse(x))
+    # return Parsing data
+    return data
+
+# # Stemming step
+def Stemming(data):
+    # Stemming
+    data['Stemming'] = data['tokenized'].apply(lambda x: [stemmer.stem(i) for i in x])
+    # return Stemming data
+    return data
+
+# # Lemmatization step
+def Lemmatization(data):
+    # Lemmatization
+    data['Lemmatization'] = data['tokenized'].apply(lambda x: [lemmatizer.lemmatize(i) for i in x])
+    # return Lemmatization data
+    return data
+
+# # Chunking step
+def Chunking(data):
+    # Chunking
+    data['Chunking'] = data['tokenized'].apply(lambda x: nltk.ne_chunk(x))
+    # return Chunking data
+    return data
+
+# # Word Embedding step
+def WordEmbedding(data):
+    # Word Embedding
+    data['WordEmbedding'] = data['tokenized'].apply(lambda x: [word2vec(i) for i in x])
+    # return Word Embedding data
+    return data
+
+# # Word2Vec step
+def Word2Vec(data):
+    # Word2Vec
+    data['Word2Vec'] = data['tokenized'].apply(lambda x: [word2vec(i) for i in x])
+    # return Word2Vec data
+    return data
+
+# # TF-IDF step
+def TFIDF(data):
+    # TF-IDF
+    data['TFIDF'] = data['tokenized'].apply(lambda x: [tfidf(i) for i in x])
+    # return TF-IDF data
+    return data
+
+# # Bag of Words step
+def BagofWords(data):
+    # Bag of Words
+    data['BagofWords'] = data['tokenized'].apply(lambda x: [bow(i) for i in x])
+    # return Bag of Words data
+    return data
+
+# # Word Cloud step
+def WordCloud(data):
+    # Word Cloud
+    data['WordCloud'] = data['tokenized'].apply(lambda x: [wordcloud(i) for i in x])
+    # return Word Cloud data
+    return data
+
+# # Sentiment Analysis step
+def SentimentAnalysis(data):
+    # Sentiment Analysis
+    data['SentimentAnalysis'] = data['tokenized'].apply(lambda x: [sentiment(i) for i in x])
+    # return Sentiment Analysis data
+    return data
+
+# # Topic Modeling step
+def TopicModeling(data):
+    # Topic Modeling
+    data['TopicModeling'] = data['tokenized'].apply(lambda x: [topic(i) for i in x])
+    # return Topic Modeling data
+    return data
+
+# # WordNet step
+def WordNet(data):
+    # WordNet
+    data['WordNet'] = data['tokenized'].apply(lambda x: [wordnet(i) for i in x])
+    # return WordNet data
+    return data
+
+# # WordNetLemmatizer step
+def WordNetLemmatizer(data):
+    # WordNetLemmatizer
+    data['WordNetLemmatizer'] = data['tokenized'].apply(lambda x: [wordnet_lemmatizer(i) for i in x])
+    # return WordNetLemmatizer data
+    return data
+
+
+    
+    
