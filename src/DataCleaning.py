@@ -35,7 +35,6 @@ data = data[data['ctext'].apply(lambda x: x.isascii())]
 data = data[data['text'].apply(lambda x: isinstance(x, str))]
 data = data[data['ctext'].apply(lambda x: isinstance(x, str))]
 
-
 # print data after removing null values
 print(data.isnull().sum())
 
@@ -65,8 +64,6 @@ data['ctext'] = data['ctext'].apply(lambda x: re.sub(' +', ' ', x))
 data['text'] = data['text'].apply(lambda x: re.sub(r'\s+[a-zA-Z]\s+', ' ', x))
 data['ctext'] = data['ctext'].apply(lambda x: re.sub(r'\s+[a-zA-Z]\s+', ' ', x))
 
-
-
 # Remove the punctuation
 data['text'] = data['text'].apply(lambda x: x.translate(str.maketrans('', '', string.punctuation)))
 data['ctext'] = data['ctext'].apply(lambda x: x.translate(str.maketrans('', '', string.punctuation)))
@@ -94,3 +91,10 @@ data.rename(columns={'text': 'summary', 'ctext': 'text'}, inplace=True)
 # ----------------------------------Save the cleaned data--------------------------------------------
 # Save the cleaned data to a csv file
 data.to_csv('../Datasets/cleaned_data.csv', index=False)
+
+# ----------------------------------Data Loading--------------------------------------------
+# Load the cleaned data
+data = pd.read_csv('../Datasets/cleaned_data.csv')
+
+# Print the first 5 rows of the dataset
+print(data.head())
