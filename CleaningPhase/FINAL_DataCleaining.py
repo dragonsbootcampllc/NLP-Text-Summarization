@@ -13,7 +13,7 @@ with open("data.csv", 'r', encoding=encoding) as f:
 
 
 def select_data_we_need(_data):
-    data = data[['text', 'ctext', 'headlines']]
+    _data = data[['text', 'ctext', 'headlines']]
     return _data
 
 
@@ -25,11 +25,11 @@ def check_data(_data):
 
 
 def remove_duplicate(_data):
-     _data.drop_duplicates(subset=['text'], inplace=True)
-     _data.drop_duplicates(subset=['ctext'], inplace=True)
-     _data.drop_duplicates(subset=['headlines'], inplace=True)
-   
-     return _data
+    _data.drop_duplicates(subset=['text'], inplace=True)
+    _data.drop_duplicates(subset=['ctext'], inplace=True)
+    _data.drop_duplicates(subset=['headlines'], inplace=True)
+
+    return _data
 
 
 def transform_to_lowercase(data_selected):
@@ -44,7 +44,8 @@ def transform_to_lowercase(data_selected):
 def remove_punctuation(_data):
     _data.loc[:, 'text'] = _data['text'].apply(lambda x: x.translate(str.maketrans('', '', string.punctuation)))
     _data.loc[:, 'ctext'] = _data['ctext'].apply(lambda x: x.translate(str.maketrans('', '', string.punctuation)))
-    _data.loc[:, 'headlines'] = _data['headlines'].apply(lambda x: x.translate(str.maketrans('', '', string.punctuation)))
+    _data.loc[:, 'headlines'] = _data['headlines'].apply(
+        lambda x: x.translate(str.maketrans('', '', string.punctuation)))
     return _data
 
 
@@ -52,7 +53,8 @@ def remove_stop_words(_data):
     stop_words = set(stopwords.words('english'))
     _data['text'] = _data['text'].apply(lambda x: ' '.join([word for word in x.split() if word not in stop_words]))
     _data['ctext'] = _data['ctext'].apply(lambda x: ' '.join([word for word in x.split() if word not in stop_words]))
-    _data['headlines'] = _data['headlines'].apply(lambda x: ' '.join([word for word in x.split() if word not in stop_words]))
+    _data['headlines'] = _data['headlines'].apply(
+        lambda x: ' '.join([word for word in x.split() if word not in stop_words]))
     return _data
 
 
@@ -131,7 +133,7 @@ def main(_data):
     print("Removing Extra Spaces...")
     data_rename_columns = rename_columns(_data_remove_extra_spaces)
     print("Renaming Columns...")
-    save_data(data_rename_columns, '../CleaningPhase/data_cleaned.csv')
+    save_data(data_rename_columns, 'data_cleaned.csv')
     print("Done")
 
 
