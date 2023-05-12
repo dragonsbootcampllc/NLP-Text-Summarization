@@ -1,83 +1,163 @@
-# Import functions
-
-import nltk
-import pandas as pd
-import numpy as np
+# luhn_sum algorithm for text summarization.
 import re
-import string
+import chardet
+import content as content
+import pandas as pd
+from nltk import word_tokenize, sent_tokenize, WordNetLemmatizer
 from nltk.corpus import stopwords
 
+word_limit = 300
 
 
-
-data = pd.read_csv('../Datasets/news_summary.csv', encoding='latin-1')
-
-
-    
-class data_Cleaning_TextSummarize:  
-    def sellectDataWeNeed(data):
-        data = data[['text', 'ctext']]
-    def checkData(data):
-        print(data.head())
-        print(data.info())
-        print(data.describe())
-        print( "Null Data: "+data.isnull().sum())
-    def removeDuplicate(data):
-        data.drop_duplicates(inplace=True)
-    def TransformToLowercase(data):
-        data['text'] = data['text'].apply(lambda x: x.lower())
-        data['ctext'] = data['ctext'].apply(lambda x: x.lower())
-    def removePunctuation(data):
-        data['text'] = data['text'].apply(lambda x: x.translate(str.maketrans('', '', string.punctuation)))
-        data['ctext'] = data['ctext'].apply(lambda x: x.translate(str.maketrans('', '', string.punctuation)))
-    def removeStopWords(data):
-        stop_words = set(stopwords.words('english'))
-        data['text'] = data['text'].apply(lambda x: ' '.join([word for word in x.split() if word not in stop_words]))
-        data['ctext'] = data['ctext'].apply(lambda x: ' '.join([word for word in x.split() if word not in stop_words]))
-    def removeNonString(data):
-        data['text'] = data['text'].apply(lambda x: re.sub('[^a-zA-Z]', ' ', x))
-        data['ctext'] = data['ctext'].apply(lambda x: re.sub('[^a-zA-Z]', ' ', x))
-    def removeNullValues(data):
-        data.dropna(inplace=True)
-    def nonEnglishValues(data):
-        data = data[data['text'].apply(lambda x: x.isascii())]
-        data = data[data['ctext'].apply(lambda x: x.isascii())]
-    def removeSingleChar(data):
-        data['text'] = data['text'].apply(lambda x: re.sub(r'\s+[a-zA-Z]\s+', ' ', x))
-        data['ctext'] = data['ctext'].apply(lambda x: re.sub(r'\s+[a-zA-Z]\s+', ' ', x))
-    def removeExtraSpaces(data):
-        data['text'] = data['text'].apply(lambda x: re.sub(' +', ' ', x))
-        data['ctext'] = data['ctext'].apply(lambda x: re.sub(' +', ' ', x))
-    def renameColumns(data):
-        data.rename(columns={'text': 'summary', 'ctext': 'text'}, inplace=True)
-        print(data.head())
-        print(data.info())
-        print(data.describe())
-   
-    def __init__(self,data):
-        self.sellectDataWeNeed(data)
-        self.checkData(data)
-        self.TransformToLowercase(data)
-        self.removeDuplicate(data)
-        self.removeStopWords(data)
-        self.removePunctuation(data)
-        self.removeNullValues(data)
-        self.nullValues(data)
-        self.nonEnglishValues(data)
-        self.removeSingleChar(data)
-        self.removeExtraSpaces(data)
-        self.renameColumns(data) 
+def get_tokinizedData_content():
+    with open('tokinized.csv', 'rb') as f:
+        result = chardet.detect(f.read())
+        encoding = result['encoding']
+    with open("tokinized.csv", 'r', encoding=encoding) as f:
+        _data_tokinized = pd.read_csv(f)
+        return _data_tokinized
 
 
-def saveData(data , path):
-    data.to_csv(path, index=False)
-    print(data.head())
-    print(data.info())
-    print(data.describe())
+def clean(article):
+    lem = WordNetLemmatizer()
+    article = re.sub(r'\[[0-9]*\]', ' ', article)
+    article = sent_tokenize(article)
+    cleaned_list = []
+    for sent in article:
+        sent = sent.lower()
+        word_list = []
+        words = word_tokenize(sent)
+        for word in words:
+            word_list.append(lem.lemmatize(word.lower()))
+        cleaned_list.append(' '.join(word_list))
+    return cleaned_list
 
 
-def main(data):
-    TextSummarizeOBj = data_Cleaning_TextSummarize()
-    TextSummarizeOBj.__init__(data)
-    saveData(data,'../Datasets/cleaned_data.csv')
+def get_CleanData_content():
+    with open('data_cleaned.csv', 'rb') as f:
+        result = chardet.detect(f.read())
+        encoding = result['encoding']
+    with open("data_cleaned.csv", 'r', encoding=encoding) as f:
+        _data_tokinized = pd.read_csv(f)
+        return _data_tokinized
 
+
+def get_ctext_CleanData_content():
+    with open('data_cleaned.csv', 'rb') as f:
+        result = chardet.detect(f.read())
+        encoding = result['encoding']
+    with open("data_cleaned.csv", 'r', encoding=encoding) as f:
+        _data_cleaned = pd.read_csv(f)
+        content = ''
+        for i in range(len(_data_cleaned)):
+            content += _data_cleaned['ctext'][i]
+        return content
+
+
+def get_frequency_dictionary(cleaned_content):
+    frequency_dictionary = {}
+    for sentence in cleaned_content:
+        word_list = word_tokenize(sentence)
+        print("loading... it will take a while(~2min)")
+        for word in word_list:
+            if word not in set(stopwords.words('english')).union(
+                    {',', '.', ';', '%', ')', '(', '``'}):
+                if word not in frequency_dictionary.keys():
+                    frequency_dictionary[word] = 1
+                else:
+                    frequency_dictionary[word] += 1
+    return frequency_dictionary
+
+
+def get_score(cleaned_content, frequency_dictionary):
+    sentence_scores = {}
+    print("the process is starting... it will take a while(~2min)")
+    for index, sentence in enumerate(cleaned_content):
+        word_list = word_tokenize(sentence)
+        for word in word_list:
+            if word in frequency_dictionary.keys():
+                if len(sentence.split(' ')) < word_limit:
+                    if sentence not in sentence_scores.keys():
+                        sentence_scores[index] = frequency_dictionary[word]
+                    else:
+                        sentence_scores[index] += frequency_dictionary[word]
+    return sentence_scores
+
+
+def get_summary(sentence_scores, cleaned_content, threshold):
+    summary = ''
+    print("the process is starting... it will take a while(~2min)")
+    for index in sorted(sentence_scores, reverse=True):
+        if len(summary.split(' ')) < threshold:
+            summary += cleaned_content[index]
+
+    return summary
+
+
+# get the acuricy of the summary
+def get_acuricy(summary, topic_name):
+    with open('data_cleaned.csv', 'rb') as f:
+        result = chardet.detect(f.read())
+        encoding = result['encoding']
+    with open("data_cleaned.csv", 'r', encoding=encoding) as f:
+        _data_cleaned = pd.read_csv(f)
+        content_for_accuricy = ''
+        for i in range(len(_data_cleaned)):
+            if _data_cleaned['headlines'][i] == topic_name:
+                content_for_accuricy += _data_cleaned['ctext'][i]
+        content_for_accuricy = re.sub(r'[^a-zA-Z0-9]', ' ', content_for_accuricy)
+        # remove extra spaces
+        content_for_accuricy = re.sub(r'\s+', ' ', content_for_accuricy)
+        content_for_accuricy = content_for_accuricy.lower()
+        summary = re.sub(r'[^a-zA-Z0-9]', ' ', summary)
+        # remove extra spaces
+        summary = re.sub(r'\s+', ' ', summary)
+        summary = summary.lower()
+        content_for_accuricy = content_for_accuricy.split(' ')
+        summary = summary.split(' ')
+        count = 0
+        for word in summary:
+            if word in content_for_accuricy:
+                count += 1
+        acuricy = count / len(summary)
+        return acuricy
+
+
+def main():
+    print("Luhn Summarizer")
+    topic_name = get_CleanData_content().iloc[2]['headlines']
+
+    print("Topic: ", topic_name)
+    print("Cleaned Content: ")
+    cleaned_content = get_tokinizedData_content()['summary']
+    print("cleaned_content Done")
+    threshold = len(cleaned_content) // 40
+    print("Threshold: ", threshold)
+    # frequency_dictionary
+    print("Frequency Dictionary Phase: ")
+    frequency_dictionary = get_frequency_dictionary(cleaned_content)
+    print("frequency_dictionary Done")
+    # sentence_scores
+    print("Sentence Scores Phase: ")
+    sentence_scores = get_score(cleaned_content, frequency_dictionary)
+    print("Sentence Scores is Done")
+    print(sentence_scores)
+    print("sentence_scores Done")
+    # use sentence_scores to get summary
+    summary = get_summary(sentence_scores, cleaned_content, threshold)
+    print("Summary Phase: ")
+
+    outer_summary = re.sub(r'[^a-zA-Z0-9]', ' ', summary)
+    # remove extra spaces
+    outer_summary = re.sub(r'\s+', ' ', outer_summary)
+    print("Summary: ", outer_summary)
+    print("Summary Done - Luhn Summarizer")
+    print("Luhn Summarizer Done")
+    print("get the accuricy")
+    accuricy_matrix = get_acuricy(outer_summary, topic_name)
+    print("acuricy: ", accuricy_matrix)
+    print("acuricy Done")
+
+
+if __name__ == '__main__':
+    main()
