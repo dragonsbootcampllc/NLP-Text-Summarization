@@ -1,4 +1,3 @@
-import chardet
 import numpy as np
 import pandas as pd
 from nltk.corpus import stopwords
@@ -11,46 +10,26 @@ import nltk
 
 
 def get_tokinizedData_content():
-    with open('tokinized.csv', 'rb') as f:
-        result = chardet.detect(f.read())
-        encoding = result['encoding']
-    with open("tokinized.csv", 'r', encoding=encoding) as f:
-        _data_tokinized = pd.read_csv(f)
-        return _data_tokinized
+    return pd.read_csv("tokinized.csv")
 
 
 def get_CleanData_content():
-    with open('data_cleaned.csv', 'rb') as f:
-        result = chardet.detect(f.read())
-        encoding = result['encoding']
-    with open("data_cleaned.csv", 'r', encoding=encoding) as f:
-        _data_cleaned = pd.read_csv(f)
-        return _data_cleaned
+    return pd.read_csv("data_cleaned.csv")
 
 
 def get_ctext_CleanData_content():
-    with open('data_cleaned.csv', 'rb') as f:
-        result = chardet.detect(f.read())
-        encoding = result['encoding']
-    with open("data_cleaned.csv", 'r', encoding=encoding) as f:
-        _data_cleaned = pd.read_csv(f)
-        content = ''
-        for i in range(len(_data_cleaned)):
-            content += _data_cleaned['ctext'][i]
-        return content
+    _data_cleaned = pd.read_csv("data_cleaned.csv")
+    content = ''
+    for i in range(len(_data_cleaned)):
+        content += _data_cleaned['ctext'][i]
+    return content
 
 
 def clean(sentences):
     lemmatizer = WordNetLemmatizer()
-    cleaned_sentences = []
-    print("loading... it will take a while(~2min)")
-    for sentence in sentences:
-        sentence = sentence.lower()
-        sentence = re.sub(r'[^a-zA-Z]', ' ', sentence)
-        sentence = sentence.split()
-        sentence = [lemmatizer.lemmatize(word) for word in sentence if word not in set(stopwords.words('english'))]
-        sentence = ' '.join(sentence)
-        cleaned_sentences.append(sentence)
+    cleaned_sentences = [' '.join([lemmatizer.lemmatize(word) for word in sentence.lower().split()
+                                    if word not in set(stopwords.words('english'))])
+                          for sentence in sentences]
     print("cleaning done")
     return cleaned_sentences
 
@@ -72,12 +51,6 @@ def init_probability(sentences):
     return probability_dict
 
 
-def update_probability(probability_dict, word):
-    if probability_dict.get(word):
-        probability_dict[word] = probability_dict[word] ** 2
-    return probability_dict
-
-
 def average_sentence_weights(sentences, probability_dict):
     sentence_weights = {}
     for index, sentence in enumerate(sentences):
@@ -88,24 +61,22 @@ def average_sentence_weights(sentences, probability_dict):
     return sentence_weights
 
 
-def generate_summary(sentence_weights, probability_dict, cleaned_article, tokenized_article, summary_length=30):
+def generate_summary(sentence_weights, probability_dict, cleaned_article, tokenized_article, summary_length=1):
     summary = []
     summary_length = min(summary_length, len(tokenized_article))
     while len(summary) < summary_length:
         max_weight = max(sentence_weights.values())
         for index, weight in sentence_weights.items():
             if weight == max_weight:
-                summary.append(tokenized_article[index])
+                summary.append(str(tokenized_article[index]))
                 sentence_weights.pop(index)
                 break
 
     summary = ' '.join(summary)
     summary = clean([summary])[0]
-    summary = summary.split()
-    for index, word in enumerate(summary):
-        summary[index] = update_probability(probability_dict, word)
-    summary = ' '.join(summary)
-    return summary
+    summary_prob = sum([probability_dict[word] for word in summary.split() if word in probability_dict.keys()])
+    return summary, summary_prob
+
 
 def main():
     print("BasicSum algorithm is running...")
@@ -123,10 +94,11 @@ def main():
     print("Probability Dictionary Initialized")
     sentence_weights = average_sentence_weights(cleaned_article, probability_dict)
     print("Sentence Weights Calculated")
-    summary = generate_summary(sentence_weights, probability_dict, cleaned_article, tokenized_article, required_length)
+    summary, summary_prob = generate_summary(sentence_weights, probability_dict, cleaned_article, tokenized_article, required_length)
     print("Summary Generated")
     print("Summary: ")
     print(summary)
+    print("Summary Probability: ", summary_prob)
 
 
 if __name__ == "__main__":
