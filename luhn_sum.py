@@ -118,12 +118,10 @@ def main():
     # use sentence_scores to get summary
     summary = get_summary(sentence_scores, cleaned_content, threshold)
     print("Summary Phase: ")
-    outer_summary = ''.join(summary)
-   # remove [' and '] from summary
-    outer_summary = outer_summary.replace('[', '')
-    outer_summary = outer_summary.replace(']', '')
-    # remove' from summary
-    outer_summary = outer_summary.replace("'", '')
+
+    outer_summary = re.sub(r'[^a-zA-Z0-9]', ' ', summary)
+    # remove extra spaces
+    outer_summary = re.sub(r'\s+', ' ', outer_summary)
     print("Summary: ", outer_summary)
     print("Summary Done - Luhn Summarizer")
     print("Luhn Summarizer Done")
