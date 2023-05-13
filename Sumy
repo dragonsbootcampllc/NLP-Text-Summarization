@@ -1,0 +1,172 @@
+
+
+
+def sumySummarize(filename, language="english", num_sents=1):
+    from sumy.parsers.plaintext import PlaintextParser
+    from sumy.nlp.tokenizers import Tokenizer
+    from sumy.nlp.stemmers import Stemmer
+    from sumy.utils import get_stop_words
+    from sumy.summarizers.luhn import LuhnSummarizer
+    from sumy.summarizers.lsa import LsaSummarizer
+    from sumy.summarizers.text_rank import TextRankSummarizer
+    from sumy.summarizers.lex_rank import LexRankSummarizer
+    from sumy.summarizers.sum_basic import SumBasicSummarizer
+    from sumy.summarizers.kl import KLSummarizer
+    
+    parser = PlaintextParser.from_file(filename, Tokenizer(language))
+    
+    def getSummary(sumyAlgorithm):
+        sumyAlgorithm.stop_words = get_stop_words(language)
+        summary = sumyAlgorithm(parser.document, num_sents)
+        sents = " ".join([str(sentence) for sentence in summary])
+        return sents
+    
+    stemmer = Stemmer(language)
+    
+    summaries = {}
+    summaries['Luhn'] = getSummary(LuhnSummarizer(stemmer))
+    summaries['LSA'] = getSummary(LsaSummarizer(stemmer))
+    summaries['TextRank'] = getSummary(TextRankSummarizer(stemmer))
+    summaries['LexRank'] = getSummary(LexRankSummarizer(stemmer))
+    summaries['SumBasic'] = getSummary(SumBasicSummarizer(stemmer))
+    summaries['KL'] = getSummary(KLSummarizer(stemmer))
+    
+    print("")
+    print("####### From Sumy #######")
+    print(summaries)
+
+
+def gensimSummarize(filename, coverage_fraction=0.2):
+    
+    from gensim.summarization.summarizer import summarize
+    
+    fh = open(filename,"r")
+    text = fh.read()
+    fh.close()
+    
+    summary = summarize(text, coverage_fraction)
+    
+    print("")
+    print("####### From Gensim #######")
+    print(summary)
+
+
+def pyteasSummarize(filename, title, num_sents=1):
+    
+    
+    from pyteaser import Summarize
+    
+    fh = open(filename,"r")
+    text = fh.read()
+    fh.close()
+    
+    summary = Summarize(title, text)
+    sents = " ".join([str(sentence) for sentence in summary[:num_sents]])
+    
+    print("")
+    print("####### From PyTeaser #######")
+    print(sents)
+
+
+def createJSON(filename):
+    
+    import re
+    import json
+    
+    fh = open(filename,"r")
+    text = fh.read()
+    fh.close()
+    
+    # Remove quotes
+    text = re.sub("\"",'', text)
+    
+    d = {}
+    d['id'] = 707
+    d['text'] = text
+    
+    jsonFile = filename.split(".")[0] + ".json"
+    fh = open(jsonFile,'w')
+    fh.write(json.dumps(d))
+    fh.close()
+    
+    return jsonFile
+
+
+def pytrankSummarize(filename):
+   
+    
+    import pytextrank
+    
+    jsonText = createJSON(filename)
+    
+    path_stage0 = jsonText
+    path_stage1 = "o1.json"
+    
+    with open(path_stage1, 'w') as f:
+        for graf in pytextrank.parse_doc(pytextrank.json_iter(path_stage0)):
+            f.write("%s\n" % pytextrank.pretty_print(graf._asdict()))
+    
+    path_stage2 = "o2.json"
+    
+    graph, ranks = pytextrank.text_rank(path_stage1)
+    
+    with open(path_stage2, 'w') as f:
+        for rl in pytextrank.normalize_key_phrases(path_stage1, ranks):
+            f.write("%s\n" % pytextrank.pretty_print(rl._asdict()))
+    		
+    path_stage3 = "o3.json"
+    
+    kernel = pytextrank.rank_kernel(path_stage2)
+    
+    with open(path_stage3, 'w') as f:
+        for s in pytextrank.top_sentences(kernel, path_stage1):
+            f.write(pytextrank.pretty_print(s._asdict()))
+            f.write("\n")
+    		
+    phrases = ", ".join(set([p for p in pytextrank.limit_keyphrases(path_stage2, phrase_limit=12)]))
+    sent_iter = sorted(pytextrank.limit_sentences(path_stage3, word_limit=50), key=lambda x: x[1])
+    s = []
+    
+    for sent_text, idx in sent_iter:
+        s.append(pytextrank.make_sentence(sent_text))
+    
+    graf_text = " ".join(s)
+    
+    print("")
+    print("####### From PyTextRank #######")
+    print("**excerpts:** %s\n\n**keywords:** %s" % (graf_text, phrases,))
+    
+
+def getAlgorithmChoice():
+    
+    print(" ")
+    print("Algorithm/library choices for summarization ... ")
+    print("1. Sumy (all algorithms)")
+    print("2. Gensim")
+    print("3. PyTeaser")
+    print("4. PyTextRank")
+    print(" ")
+    ch = int(input("Enter your choice: "))
+    return ch
+    
+
+if __name__ == "__main__":
+    
+    TEXT_FILE = "sample_text.txt"
+    LANGUAGE = "english"
+    SENTENCE_COUNT = 2
+    
+    choice = getAlgorithmChoice()
+    
+    if choice == 1:
+        sumySummarize(TEXT_FILE, LANGUAGE, SENTENCE_COUNT)
+    elif choice == 2:
+        gensimSummarize(TEXT_FILE, 0.2)
+    elif choice == 3:
+        pyteasSummarize(TEXT_FILE, "Topic Modelling", SENTENCE_COUNT)
+    elif choice == 4:
+        pytrankSummarize(TEXT_FILE)
+    else:
+        print("Wrong")
+        print("Dragons Team Thanx")
+     
