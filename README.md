@@ -2,6 +2,10 @@
 
 A Program that takes a text and gives a summary of the text. Generate a summary of the text by selecting the most
 important sentences in the text.
+# Video Record
+
+[![Luhn Algo](https://i.imgur.com/vKb2F1B.png)]([https://youtu.be/vt5fpE0bzSY](https://youtu.be/ej-HhM2Yo2I))
+
 
 ## Types of Summarization
 
